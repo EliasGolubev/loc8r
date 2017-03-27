@@ -18,7 +18,7 @@ block content
                 small &nbsp;
                 +outputRating(location.rating)
                 span.badge.pull-right.bedge-default= location.distance
-              p.address location.address
+              p.address= location.address
               p
                 each facility in location.facilities
                   span.label.label-warning= facility
