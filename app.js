@@ -1,3 +1,6 @@
+if (process.env.MONGODB_URI === undefined){
+  require('./secrets/env.js');
+}
 var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
