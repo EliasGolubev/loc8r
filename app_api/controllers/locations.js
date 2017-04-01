@@ -1,11 +1,12 @@
+var mongoose = require('mongoose');
+var Loc = mongoose.model('Location');
+
 /* Responce JSON */
 var sendJsonResponce = function(res, status, content){
   res.status(status);
   res.json(content);
 };
 
-var mongoose = require('mongoose');
-var Loc = mongoose.model('Location');
 var theEarth = (function(){
   var earthRadius = 6371;
 
@@ -64,8 +65,6 @@ module.exports.locationsListByDistance = function(req, res){
 };
 
 /* POST#create a new location */
-var mongoose = require('mongoose');
-var Loc = mongoose.model('Location');
 module.exports.locationsCreate= function(req, res){
   console.log(req.body);
   Loc.create({
@@ -97,8 +96,6 @@ module.exports.locationsCreate= function(req, res){
 };
 
 /* GET#location by the id */
-var mongoose = require('mongoose');
-var Loc = mongoose.model('Location');
 module.exports.locationsReadOne = function(req, res){
   console.log("Finding location details ", req.params);
   if (req.params && req.params.locationid) {
@@ -125,11 +122,66 @@ module.exports.locationsReadOne = function(req, res){
   }
 };
 
-var mongoose = require('mongoose');
-var Loc = mongoose.model('Location');
-module.exports.locationsUpdateOne = function(req, res){ /* . . . */ };
+module.exports.locationsUpdateOne = function(req, res){
+  if (!req.params.locationid) {
+    sendJsonResponce(res, 404, {
+      "message" : "Not found, locationid is required"
+    });
+    return;
+  }
+  Loc
+    .findById(req.params.locationid)
+    .select("-reviews -rating")
+    .exec(function(err, location){
+      if (!location) {
+        sendJsonResponce(res, 404, {
+          "message" : "locationid not found"
+        });
+        return;
+      } else if (err) {
+        sendJsonResponce(res, 400, err);
+        return;
+      }
+      location.name = req.body.name;
+      location.address = req.body.address;
+      location.facilities = req.body.facilities.split(",");
+      location.coords = [parseFloat(req.body.lng), parseFloat(req.body.lat)];
+      location.openingTimes = [{
+        days: req.body.days1,
+        opening: req.body.opening1,
+        closing: req.body.closing1,
+        closed: req.body.closed1,
+      }, {
+        days: req.body.days2,
+        opening: req.body.opening2,
+        closing: req.body.closing2,
+        closed: req.body.closed2,
+      }];
+      location.save(function(err, location){
+        if(err){
+          sendJsonResponce(res, 404, err);
+        } else {
+          sendJsonResponce(res, 200, location);
+        }
+      });
+    });
+};
 
-var mongoose = require('mongoose');
-var Loc = mongoose.model('Location');
-module.exports.locationsDeleteOne = function(req, res){ /* . . . */ };
-
+module.exports.locationsDeleteOne = function(req, res){
+  var locationid = req.params.locationid;
+  if (locationid) {
+    Loc 
+      .findByIdAndRemove(locationid)
+      .exec(function(err, location){
+        if (err) {
+          sendJsonResponce(res, 404, err);
+          return;
+        }
+        sendJsonResponce(res, 204, null);
+      });
+  } else {
+    sendJsonResponce(res, 404, {
+      "message" : "No locationid"
+    });
+  }
+};
