@@ -159,6 +159,7 @@ module.exports.locationsUpdateOne = function(req, res){
       }];
       location.save(function(err, location){
         if(err){
+          console.log(err);
           sendJsonResponce(res, 404, err);
         } else {
           sendJsonResponce(res, 200, location);
